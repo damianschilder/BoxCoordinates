@@ -3,18 +3,15 @@ import os
 import time
 import io
 import json
-import threading
-import traceback
+import ctypes
 
-# --- PySide6 Imports ---
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                                QHBoxLayout, QPushButton, QLabel, QLineEdit,
                                QFileDialog, QMessageBox, QGroupBox, QFormLayout,
                                QPlainTextEdit, QFrame, QGridLayout)
-from PySide6.QtGui import QIcon, QPixmap, QImage, QClipboard # <-- QIcon is imported here
+from PySide6.QtGui import QIcon, QPixmap, QImage, QClipboard
 from PySide6.QtCore import Qt, QThread, QObject, Signal, Slot
 
-# --- Core Processing Imports ---
 import torch
 try:
     from segment_anything import SamAutomaticMaskGenerator, sam_model_registry
@@ -35,23 +32,21 @@ import requests
 from PIL import Image
 from PIL.ImageQt import ImageQt
 
-# --- Configuration & Global Variables ---
 APP_NAME = "Coordinates extractor using SAM"
 MODEL_TYPE = "vit_b"
 SAM_CHECKPOINT_FILENAME = "sam_vit_b_01ec64.pth"
-ICON_FILENAME = "icon.ico"  # <-- Your icon file name
+ICON_FILENAME = "icon.ico"
 SAM_MODEL_DOWNLOAD_URL = f"https://dl.fbaipublicfiles.com/segment_anything/{SAM_CHECKPOINT_FILENAME}"
 MAX_IMAGE_DIMENSION = 1280
 EXPORT_DIR = "exports"
 
 def get_base_path():
-    """Gets the base path, whether running from a script or a frozen executable."""
     if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
         return sys._MEIPASS
     return os.path.dirname(os.path.abspath(__file__))
 
 BASE_PATH = get_base_path()
-ICON_PATH = os.path.join(BASE_PATH, ICON_FILENAME) # <-- Full path to the icon
+ICON_PATH = os.path.join(BASE_PATH, ICON_FILENAME)
 SAM_CHECKPOINT_PATH = os.path.join(BASE_PATH, SAM_CHECKPOINT_FILENAME)
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -68,7 +63,6 @@ PARAM_EXPLANATIONS = {
     "SAM_MIN_MASK_REGION_AREA": "SAM generator: Discards raw mask regions smaller than this pixel area."
 }
 
-# --- Helper & Core Processing Functions (Unchanged Logic) ---
 def calculate_aspect_ratio(bbox):
     x, y, w, h = bbox
     if h == 0 or w == 0: return 0
@@ -172,7 +166,7 @@ def run_sam_processing(image_path, params, worker_signals):
             rect = patches.Rectangle((x_bbox, y_bbox), w_bbox, h_bbox, linewidth=2, edgecolor=random_color, facecolor='none')
             ax.add_patch(rect)
             ax.text(x_bbox + w_bbox / 2, y_bbox + h_bbox / 2, str(i), color='white', fontsize=12, ha='center', va='center',
-                    bbox=dict(facecolor=random_color, alpha=0.8, pad=1, edgecolor='none'))
+                            bbox=dict(facecolor=random_color, alpha=0.8, pad=1, edgecolor='none'))
         img_buffer = io.BytesIO()
         fig.savefig(img_buffer, format='PNG', bbox_inches='tight', pad_inches=0, dpi=120)
         plt.close(fig)
@@ -181,9 +175,9 @@ def run_sam_processing(image_path, params, worker_signals):
         annotated_qimage = ImageQt(annotated_image_pil)
         worker_signals.finished.emit(lid_coordinates_list_original_scale, annotated_qimage, params)
     except Exception as e:
+        import traceback
         worker_signals.error.emit(f"An error occurred: {e}\n{traceback.format_exc()}")
 
-# --- PySide6 Worker for Threading ---
 class WorkerSignals(QObject):
     finished = Signal(list, QImage, dict)
     error = Signal(str)
@@ -224,7 +218,6 @@ class SamWorker(QObject):
                 try: os.remove(SAM_CHECKPOINT_PATH)
                 except Exception as rm_e: print(f"Could not remove partial download: {rm_e}")
 
-# --- PySide6 GUI Application ---
 class ModernSamApp(QMainWindow):
     start_processing_signal = Signal(str, dict)
     start_download_signal = Signal()
@@ -232,12 +225,10 @@ class ModernSamApp(QMainWindow):
     def __init__(self):
         super().__init__()
         
-        # --- SET THE APPLICATION ICON ---
         if os.path.exists(ICON_PATH):
             self.setWindowIcon(QIcon(ICON_PATH))
         else:
             print(f"Warning: Application icon not found at '{ICON_PATH}'")
-        # --------------------------------
 
         self.setWindowTitle(APP_NAME)
         self.setGeometry(100, 100, 1000, 900)
@@ -509,7 +500,7 @@ class ModernSamApp(QMainWindow):
         if annotated_qimage:
             pixmap = QPixmap.fromImage(annotated_qimage)
             self.image_panel.setPixmap(pixmap.scaled(self.image_panel.size(),
-                                                     Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                                                    Qt.KeepAspectRatio, Qt.SmoothTransformation))
         else:
             self.image_panel.setText("No annotation image generated.")
         self.select_button.setEnabled(True)
@@ -574,7 +565,7 @@ class ModernSamApp(QMainWindow):
             self.check_sam_model()
             return
         file_path, _ = QFileDialog.getOpenFileName(self, "Select an Image File", "",
-                                                     "Image Files (*.tif *.tiff *.jpg *.jpeg *.png *.bmp);;All Files (*)")
+                                                   "Image Files (*.tif *.tiff *.jpg *.jpeg *.png *.bmp);;All Files (*)")
         if not file_path: return
         self.last_image_path = file_path
         self._start_processing(self.last_image_path)
@@ -592,9 +583,16 @@ class ModernSamApp(QMainWindow):
         event.accept()
 
 if __name__ == "__main__":
+    myappid = 'mycompany.myproduct.subproduct.version'
+    try:
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+    except AttributeError:
+        pass
+
     if DEVICE.type == 'cuda':
         os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
     os.makedirs(EXPORT_DIR, exist_ok=True)
+    
     app = QApplication(sys.argv)
     window = ModernSamApp()
     window.show()

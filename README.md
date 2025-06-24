@@ -1,80 +1,104 @@
-# SAM Lid Segmentation & Coordinate Extractor
+# Coordinates Extractor using SAM
 
-## Overview
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Python Version](https://img.shields.io/badge/Python-3.9%2B-blue.svg)
+![Framework](https://img.shields.io/badge/Framework-PySide6-cyan.svg)
 
-This project uses Meta AI's Segment Anything Model (SAM) to automatically identify and segment multiple "lids" or "trays" (up to 6, based on current configuration) within a single image. After identifying these lids, it displays them with an index, saves the annotated image, and prints the top-left (xmin, ymin) and bottom-right (xmax, ymax) bounding box coordinates for each identified lid to the console.
+A user-friendly desktop application that leverages Meta's Segment Anything Model (SAM) to automatically identify objects in an image and extract their bounding box coordinates.
 
-This script is designed for analyzing a single image at a time and is particularly useful for quickly extracting object boundaries and locations without manual annotation or model training for this specific image.
+---
 
-## Prerequisites
+*ADD A SCREENSHOT OF YOUR APPLICATION HERE. Drag and drop an image into the GitHub editor to upload it.*
 
-* **Python:** Python 3.8 - 3.11 recommended (script was developed with Python, ensure compatibility if using much newer versions like 3.12+ which might require specific library versions).
-* **pip:** Python package installer (usually comes with Python).
-* **Git:** For cloning the repository (if applicable) and installing SAM.
-* **(Optional) NVIDIA GPU:** For significantly faster processing.
-    * NVIDIA drivers installed.
-    * CUDA toolkit compatible with your PyTorch version (PyTorch often bundles necessary CUDA runtime libraries).
+![Application Screenshot](placeholder.png) 
 
-## Setup Instructions
+---
 
-1.  **Clone the Repository (if you're sharing it on GitHub):**
+## About The Project
+
+This tool was built to simplify the process of object coordinate extraction. It provides a graphical user interface (GUI) for the powerful Segment Anything Model, allowing users to load an image, tune filtering parameters, and instantly get machine-readable coordinates for detected objects. The application is designed to find and isolate specific objects (referred to as "lids" in the code) based on their size and shape.
+
+## Key Features
+
+* **SAM Integration:** Uses the high-performance `vit_b` variant of the Segment Anything Model for object segmentation.
+* **User-Friendly GUI:** A clean interface built with PySide6 that runs on Windows.
+* **Automatic Model Download:** If the required SAM model file (`.pth`) is not found, the application will prompt the user to download it automatically.
+* **Tunable Parameters:** Easily adjust filters for object size (min/max area) and aspect ratio to fine-tune detection.
+* **Visual Feedback:** Displays the original image annotated with segmentation masks and numbered bounding boxes for identified objects.
+* **Multiple Coordinate Formats:** Provides coordinates in a simple machine-readable list (`xmin,ymin,xmax,ymax`) and a detailed processing log.
+* **One-Click Copy:** Instantly copy the machine-readable coordinates to your clipboard.
+
+## 🚀 Download
+
+You can download the latest Windows executable from the **[Releases page](https://github.com/YourUsername/YourRepoName/releases/latest)**.
+
+The application is a single `.exe` file that requires no installation.
+
+## How to Use
+
+1.  Download the `CoordinatesExtractor.exe` from the [Releases page](https://github.com/YourUsername/YourRepoName/releases/latest).
+2.  Run the executable. If you are running it for the first time, it will ask for permission to download the ~350MB model file required by SAM.
+3.  Adjust the **Tuning Parameters** as needed:
+    * **Num Lids Target:** The number of objects you expect to find.
+    * **Min/Max Area Fraction:** Filters objects that are too small or too large relative to the image size.
+    * **Min Aspect Ratio:** Filters objects based on their shape (1.0 is a perfect square).
+4.  Click the **"Select Image & Process"** button and choose an image file.
+5.  Wait for the processing to complete. The annotated image will appear on the left.
+6.  The extracted coordinates will appear in the panels on the right. Use the "Copy" button to copy the simplified coordinates.
+7.  To re-run the process on the same image with different parameters, adjust the values and click **"Retry with Current Params"**.
+
+## 🔧 Building from Source
+
+For developers who wish to modify or build the application themselves.
+
+**Prerequisites:**
+* Python 3.9+
+* Git
+
+**Setup:**
+
+1.  **Clone the repository:**
     ```bash
-    git clone <your-repository-url>
-    cd <your-repository-name>
+    git clone [https://github.com/YourUsername/YourRepoName.git](https://github.com/YourUsername/YourRepoName.git)
+    cd YourRepoName
     ```
-    If you are just setting this up from a script file, you can skip this step and just ensure you have the script.
 
-2.  **Create a Virtual Environment (Recommended):**
-    This helps manage dependencies and avoid conflicts.
+2.  **Create a virtual environment (recommended):**
     ```bash
-    python -m venv sam_env
-    # On Windows
-    sam_env\Scripts\activate
-    # On macOS/Linux
-    source sam_env/bin/activate
+    python -m venv venv
+    source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
     ```
 
-3.  **Install Dependencies:**
-    The required Python libraries are listed in `requirements.txt`. Create a file named `requirements.txt` in your project's root directory with the following content:
+3.  **Install dependencies:**
+    * First, install the PyTorch library that matches your system's CUDA version (or the CPU version). See the [PyTorch website](https://pytorch.org/get-started/locally/) for the correct command. For example, for CPU:
+        ```bash
+        pip install torch torchvision torchaudio
+        ```
+    * Next, install the `segment-anything` library from its repository:
+         ```bash
+        pip install git+[https://github.com/facebookresearch/segment-anything.git](https://github.com/facebookresearch/segment-anything.git)
+        ```
+    * Finally, install the remaining packages:
+        ```bash
+        pip install PySide6 matplotlib numpy requests Pillow
+        ```
 
-    ```txt
-    torch
-    torchvision
-    torchaudio
-    opencv-python
-    matplotlib
-    numpy
-    Pillow
-    # For SAM, install directly from GitHub:
-    # segment-anything  <- This line is a comment, install SAM as per command below
-    ```
-
-    Then, install the dependencies:
+4.  **Run the application:**
     ```bash
-    pip install -r requirements.txt
-    pip install git+[https://github.com/facebookresearch/segment-anything.git](https://github.com/facebookresearch/segment-anything.git)
+    python BoxCoordinates.py
     ```
-    **Note:** Ensure your PyTorch installation includes CUDA support if you intend to use a GPU. If you encounter issues or the script defaults to CPU, visit the [PyTorch Get Started page](https://pytorch.org/get-started/locally/) to get the correct `pip install` command for your specific OS and CUDA version. For example:
-    ```bash
-    # Example for PyTorch with CUDA 11.8 (check official site for latest)
-    # pip install torch torchvision torchaudio --index-url [https://download.pytorch.org/whl/cu118](https://download.pytorch.org/whl/cu118)
+5. **Build the executable:**
+    Make sure PyInstaller is installed (`pip install pyinstaller`). Then, use the provided `.spec` file to build the executable.
+     ```bash
+    pyinstaller --onefile CoordinatesExtractor.spec
     ```
+    The final `.exe` will be in the `/dist` folder.
 
-4.  **Download SAM Model Checkpoint:**
-    * This script is configured to use the ViT-Base model (`vit_b`). Download the checkpoint file:
-        * **`sam_vit_b_01ec64.pth`**: [Direct Link (from SAM GitHub)](https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth)
-    * Place the downloaded `.pth` file (e.g., `sam_vit_b_01ec64.pth`) in the **same directory as your Python script**, or update the `SAM_CHECKPOINT_PATH` variable within the script to its correct location.
-    * Other model checkpoints (e.g., `vit_l`, `vit_h`) can be found on the [SAM GitHub repository](https://github.com/facebookresearch/segment-anything#model-checkpoints). If you use a different model, update `MODEL_TYPE` and `SAM_CHECKPOINT_PATH` in the script.
+## Acknowledgements
 
-5.  **Prepare Input Image:**
-    * The script expects an input image located at `Original/output_image.jpg` relative to where the script is run.
-    * Create a folder named `Original` in your project directory.
-    * Place your target image (e.g., `output_image.jpg`) inside this `Original` folder.
-    * You can change the `IMAGE_PATH` variable in the script if your image is located elsewhere or named differently.
+* This project is heavily reliant on the incredible **[Segment Anything Model (SAM)](https://github.com/facebookresearch/segment-anything)** by Meta AI.
+* The GUI is built with the **[PySide6](https://www.qt.io/qt-for-python)** framework.
 
-## Running the Script
+## License
 
-Once the setup is complete, you can run the script from your terminal (ensure your virtual environment is activated):
-
-```bash
-python your_script_name.py
+This project is distributed under the MIT License. See the `LICENSE` file for more information.

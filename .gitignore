@@ -1,1 +1,14 @@
 sam_vit_b_01ec64.pth
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.spec
+
+# PyInstaller folders
+/build/
+/dist/
