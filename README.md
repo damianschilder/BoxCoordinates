@@ -6,11 +6,7 @@ Here is the updated README:
 
 A user-friendly desktop application that leverages Meta's Segment Anything Model (SAM) to automatically identify objects in an image and extract their bounding box coordinates.
 
------
-
-*ADD A SCREENSHOT OF YOUR APPLICATION HERE. Drag and drop an image into the GitHub editor to upload it.*
-
------
+![screenshot2](https://github.com/user-attachments/assets/c622615e-e02e-4037-a9d8-242b6272b181)
 
 ## About The Project
 
